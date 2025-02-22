@@ -1,6 +1,4 @@
 import heapq
-from datetime import datetime
-
 
 class Event:
     def __init__(self, event_time, event_type, robot_name, machine_name):

@@ -12,23 +12,32 @@ class ExecutionDataset:
         self.executions = self._load_executions()
 
     def _load_executions(self):
-        """
-        Lê o arquivo Excel e carrega as execuções em um conjunto de dicionários.
-        """
-        df = pd.read_excel(self.file_path)
-        executions = set()
+            """
+            Lê o arquivo Excel e carrega as execuções em um conjunto de dicionários.
+            """
+            df = pd.read_excel(self.file_path)
+            executions = set()
 
-        for _, row in df.iterrows():
-            execution = {
-                "execution_id": row["execution_id"],
-                "robot": row["robot"],
-                "items": row["items"],
-                "time_per_item": row["time_per_item"],
-                "start_window": '' if pd.isna(row["start_window"]) else datetime.strptime(row["start_window"], "%Y-%m-%d %H:%M"),
-                "end_window": '' if pd.isna(row["end_window"]) else datetime.strptime(row["end_window"], "%Y-%m-%d %H:%M"),
-                "completed": False
-            }
-            executions.add(frozenset(execution.items()))  # Armazenamos como um conjunto imutável
+            for _, row in df.iterrows():
+                execution = {
+                    "execution_id": row["execution_id"],
+                    "robot": row["robot"],
+                    "items": row["items"],
+                    "time_per_item": row["time_per_item"],
+                    "start_window": '' if pd.isna(row["start_window"]) else self._parse_time(row["start_window"]),
+                    "end_window": '' if pd.isna(row["end_window"]) else self._parse_time(row["end_window"]),
+                    "completed": False
+                }
+                executions.add(frozenset(execution.items()))
+
+            return executions
+
+    def _parse_time(self, time_str):
+        """
+        Converte um horário no formato 'HH:MM' para um datetime com uma data fixa.
+        """
+        return datetime.strptime(time_str, "%H:%M").time()  # Retorna apenas a hora, sem data
+
 
         return executions
 

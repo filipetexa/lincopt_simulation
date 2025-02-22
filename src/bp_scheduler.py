@@ -55,6 +55,9 @@ class BPScheduler:
 
         print(f"🔹 {len(self.scheduled_heap)} execuções programadas carregadas no BP Scheduler.")
 
+    def get_all_executions(self):
+        return sorted(self.scheduled_heap)
+    
     def get_next_execution(self):
         """
         Retorna a próxima execução programada.
