@@ -1,0 +1,5 @@
+execution_id,robot,items,time_per_item,start_window,end_window,completed
+1,R1,5,10,2025-02-23 16:00,2025-02-20 22:00,False
+2,R2,3,15,2025-02-20 09:00,2025-02-20 12:00,False
+3,R3,2,20,2025-02-20 14:00,2025-02-20 16:00,False
+4,R4,4,12,,,False
