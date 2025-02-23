@@ -29,7 +29,7 @@ class DynamicQueue:
         """
         Inicializa a fila dinâmica de robôs.
 
-        :param file_path: Caminho do arquivo Excel contendo os robôs.
+        :param file_path: Caminho do arquivo CSV contendo os robôs.
         :param sorting_algorithm: Algoritmo de ordenação da fila (padrão: FIFO).
         """
         self.robots = self._load_queue(file_path)
@@ -38,9 +38,9 @@ class DynamicQueue:
 
     def _load_queue(self, file_path):
         """
-        Lê o arquivo Excel e carrega os robôs na fila inicial.
+        Lê o arquivo CSV e carrega os robôs na fila inicial.
         """
-        df = pd.read_excel(file_path)
+        df = pd.read_csv(file_path)
         robots = [Robot(row["robot"], row["priority"]) for _, row in df.iterrows()]
         return robots
 

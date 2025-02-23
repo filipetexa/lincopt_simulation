@@ -10,9 +10,9 @@ from machines import Machines
 USE_BP_SCHEDULER = True  # Se False, usará DynamicQueue (ainda não implementada)
 
 # Definir caminhos dos arquivos de entrada
-BP_SCHEDULER_FILE = "data/bp_scheduler.xlsx"
-DYNAMIC_QUEUE_FILE = "data/dynamic_queue.xlsx"
-EXECUTION_DATASET_FILE = "data/execution_dataset.xlsx"
+BP_SCHEDULER_FILE = "data/bp_scheduler.csv"
+DYNAMIC_QUEUE_FILE = "data/dynamic_queue.csv"
+EXECUTION_DATASET_FILE = "data/execution_dataset.csv"
 SIMULATION_LOG_FILE = "logs/simulation_log.csv"
 
 # Inicializar as estruturas do sistema

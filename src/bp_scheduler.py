@@ -1,5 +1,5 @@
 import heapq
-import pandas as pd 
+import pandas as pd
 from datetime import datetime
 
 class ScheduledExecution:
@@ -33,7 +33,7 @@ class BPScheduler:
         """
         Inicializa o BP Scheduler e carrega as execuções programadas automaticamente.
 
-        :param file_path: Caminho do arquivo Excel contendo os agendamentos.
+        :param file_path: Caminho do arquivo CSV contendo os agendamentos.
         """
         self.file_path = file_path
         self.scheduled_heap = []  # MinHeap para armazenar as execuções programadas
@@ -41,9 +41,9 @@ class BPScheduler:
 
     def _load_schedule(self):
         """
-        Lê o arquivo Excel e carrega as execuções programadas no MinHeap.
+        Lê o arquivo CSV e carrega as execuções programadas no MinHeap.
         """
-        df = pd.read_excel(self.file_path)
+        df = pd.read_csv(self.file_path)
 
         for _, row in df.iterrows():
             robot_name = row["robot"]
@@ -53,7 +53,7 @@ class BPScheduler:
             execution = ScheduledExecution(start_time, robot_name, machine_name)
             heapq.heappush(self.scheduled_heap, execution)
 
-        print(f"🔹 {len(self.scheduled_heap)} execuções programadas carregadas no BP Scheduler.")
+        print(f"{len(self.scheduled_heap)} execuções programadas carregadas no BP Scheduler.")
 
     def get_all_executions(self):
         return sorted(self.scheduled_heap)
