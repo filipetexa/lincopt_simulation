@@ -1,18 +1,18 @@
 import heapq
 
 class Event:
-    def __init__(self, event_time, event_type, robot_name, machine_name):
+    def __init__(self, event_time, event_type, robot, machine_name):
         """
         Representa um evento dentro da simulação.
 
         :param event_time: Tempo no qual o evento deve ser processado.
         :param event_type: Tipo do evento ('start_execution' ou 'end_execution').
-        :param robot_name: Nome do robô envolvido na execução.
+        :param robot: Instância da classe Robot.
         :param machine_name: Nome da máquina onde o robô será executado.
         """
         self.event_time = event_time  
         self.event_type = event_type  
-        self.robot_name = robot_name  
+        self.robot = robot 
         self.machine_name = machine_name  
 
     def __lt__(self, other):
@@ -27,7 +27,7 @@ class Event:
         Representação legível do evento para debug.
         """
         return (f"Event(time={self.event_time}, type={self.event_type}, "
-                f"robot={self.robot_name}, machine={self.machine_name})")
+                f"robot={self.robot.name}, priority={self.robot.priority}, machine={self.machine_name})")
 
 
 class EventScheduler:
@@ -62,5 +62,3 @@ class EventScheduler:
         Retorna True se ainda há eventos pendentes no heap.
         """
         return len(self.event_heap) > 0
-
-
