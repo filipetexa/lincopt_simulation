@@ -71,7 +71,7 @@ LincOpt_Simulation/
 - Utilizado para análise de performance e métricas.
 
 ## Fluxo de Inicialização
-1. **Carregar dados dos arquivos Excel:**
+2. **Carregar dados dos arquivos Excel:**
    - `ExecutionDataset`
    - `DynamicQueue` ou `BPScheduler`
 2. **Preencher o `EventScheduler` (MinHeap) com execuções pendentes.**
@@ -86,5 +86,16 @@ LincOpt_Simulation/
 - Avaliar diferentes **algoritmos de ordenação**.
 - Gerar **métricas de escalonamento** para análise de performance.
 
+## Casos de Teste
+1. Um mês de execuções com janelas espaçadas  de 1h em 1h no bp_scheduler, mas sem restrições de horario.
+  1.1 Usando apenas uma maquina.
+  1.2 Usando multiplas maquinas.
+2.Um mês de execuções com janelas espaçadas com tempos variados bp_scheduler, com restrições de horario. Exemplo 15 min e na sequencia uma janela de 4h.
+  2.1 Usando apenas uma maquina.
+  2.2 Usando multiplas maquins.
+3. Um mês de execuções com Shceduler cheio:
+  3.1 Execuções com cargas muito pequenas comoparadas as janelas do scheduler 
+  3.2 Execuções com cargas muito grandes comoparadas as janelas do scheduler
+4. Carga anual contenplando os casos 1, 2 e 3. 
 
 
