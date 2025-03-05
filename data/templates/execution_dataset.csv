@@ -8,4 +8,3 @@ execution_id,robot,items,time_per_item,start_window,end_window,completed
 7,R7,2,18,2025-02-20 09:00,2025-02-20 10:00,False
 8,R8,4,22,2025-02-20 09:10,2025-02-20 10:10,False
 9,R9,5,16,2025-02-20 09:20,2025-02-20 10:20,False
-,
