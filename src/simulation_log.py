@@ -15,9 +15,9 @@ class SimulationLog:
         if not os.path.exists(self.file_path):
             with open(self.file_path, mode="w", newline="") as file:
                 writer = csv.writer(file)
-                writer.writerow(["log_id", "execution_id", "robot", "machine", "start_time", "end_time"])
+                writer.writerow(["log_id", "execution_id", "event_type", "robot", "machine", "start_time", "end_time", "data"])
 
-    def log_execution(self, robot, machine, start_time, end_time, execution_id=None):
+    def log_execution(self, event_type, robot, machine, start_time, end_time, execution_id=None, data= None):
         """
         Adiciona uma entrada ao log.
 
@@ -31,7 +31,7 @@ class SimulationLog:
 
         with open(self.file_path, mode="a", newline="") as file:
             writer = csv.writer(file)
-            writer.writerow([log_id, execution_id, robot, machine, start_time, end_time])
+            writer.writerow([log_id, execution_id, event_type, robot, machine, start_time, end_time, data])
 
     def get_logs(self):
         """

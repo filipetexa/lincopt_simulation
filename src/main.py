@@ -23,7 +23,8 @@ finish_time = datetime(2025, 3, 20, 0, 0)
 event_scheduler = EventScheduler(start_time)
 execution_dataset = ExecutionDataset(EXECUTION_DATASET_FILE)
 simulation_log = SimulationLog(SIMULATION_LOG_FILE)
-machine_names = ["M1", "M2", "M3"]  # Máquinas disponíveis
+# machine_names = ["M1", "M2", "M3"]  # Máquinas disponíveis
+machine_names = ["M1"]  # Máquinas disponíveis
 machines = Machines(machine_names)
 
 # =================================== LÓGICA PARA ESCOLHER ENTRE BP SCHEDULER E FILA DINÂMICA ===================================
@@ -31,7 +32,7 @@ if USE_BP_SCHEDULER:
     scheduler = BPScheduler(BP_SCHEDULER_FILE)
     executions = scheduler.get_all_executions()
     for execution in executions:
-        robot = execution.robot  # Agora `execution.robot` é uma instância da classe Robot
+        robot = execution.robot 
         scheduled_bot_event = Event(execution.start_time, "start_execution", robot, execution.machine_name)
         event_scheduler.add_event(scheduled_bot_event)
 else:
@@ -46,8 +47,12 @@ else:
 # ==============================================================================================================================
 
 # Executar a simulação
-while event_scheduler.has_pending_events() or clock >= finish_time:
+while event_scheduler.has_pending_events() and clock <= finish_time:
     event = event_scheduler.get_next_event()
+    
+    # Sai do loop caso não tenha mais eventos a serem processados
+    if event == None:
+        break
 
     # ============================= PROCESSAMENTO DE EVENTO DE INÍCIO (start_execution) =============================
     if event.event_type == "start_execution":
@@ -73,7 +78,7 @@ while event_scheduler.has_pending_events() or clock >= finish_time:
             event_scheduler.add_event(Event(end_time, "end_execution", event.robot, event.machine_name))
 
             # Registrar no SimulationLog
-            simulation_log.log_execution(event.robot.name, event.machine_name, event.event_time, end_time, execution_id)
+            simulation_log.log_execution(event.event_type, event.robot.name, event.machine_name, event.event_time, end_time, execution_id)
 
             # Marcar a execução como concluída se for do ExecutionDataset
             if execution_id:
@@ -81,7 +86,7 @@ while event_scheduler.has_pending_events() or clock >= finish_time:
 
         else:
             # Registrar "Atropelamento" no log e continuar
-            simulation_log.log_execution(event.robot.name, event.machine_name, event.event_time, event.event_time, execution_id=None)
+            simulation_log.log_execution(event.event_type, event.robot.name, event.machine_name, event.event_time, event.event_time)
             print(f"Atropelamento: {event.robot.name} tentou executar em {event.machine_name}, mas estava ocupada.")
             continue
 
