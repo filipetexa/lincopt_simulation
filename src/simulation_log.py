@@ -17,7 +17,7 @@ class SimulationLog:
                 writer = csv.writer(file)
                 writer.writerow(["log_id", "execution_id", "event_type", "robot", "machine", "start_time", "end_time", "data"])
 
-    def log_execution(self, event_type, robot, machine, start_time, end_time, execution_id=None, data= None):
+    def log(self, event_type, robot, machine, start_time, end_time, execution_id=None, data= None):
         """
         Adiciona uma entrada ao log.
 

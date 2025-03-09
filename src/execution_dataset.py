@@ -4,12 +4,13 @@ from datetime import datetime
 class ExecutionDataset:
     def __init__(self, file_path):
         """
-        Inicializa o ExecutionDataset e carrega os dados do arquivo CSV.
+        Inicializa o ExecutionDataset e carrega as execuções do arquivo CSV.
 
         :param file_path: Caminho do arquivo CSV contendo as execuções.
         """
         self.file_path = file_path
         self.executions = self._load_executions()
+        self._total_execution_time = self._calculate_total_execution_time()  # Calcula o tempo total planejado
 
     def _load_executions(self):
         """
@@ -26,11 +27,17 @@ class ExecutionDataset:
                 "time_per_item": row["time_per_item"],
                 "start_window": None if pd.isna(row["start_window"]) or row["start_window"] == "" else self._parse_datetime(row["start_window"]),
                 "end_window": None if pd.isna(row["end_window"]) or row["end_window"] == "" else self._parse_datetime(row["end_window"]),
-                "completed": False
+                "completed": row["completed"] if "completed" in row else False  # Respeita o valor existente ou assume False
             }
             executions.add(frozenset(execution.items()))
 
         return executions
+
+    def _calculate_total_execution_time(self):
+        """
+        Calcula o tempo total planejado de execução somando items * time_per_item de todas as execuções.
+        """
+        return sum(dict(exec)["items"] * dict(exec)["time_per_item"] for exec in self.executions)
 
     def _parse_datetime(self, datetime_str):
         """
@@ -51,12 +58,9 @@ class ExecutionDataset:
         for execution in self.executions:
             exec_dict = dict(execution)
             if exec_dict["robot"] == robot and not exec_dict["completed"]:
-                # Se houver janela de tempo definida, verificar se está dentro dela
                 if exec_dict["start_window"] and exec_dict["end_window"]:
                     if exec_dict["start_window"] <= execution_time <= exec_dict["end_window"]:
                         return exec_dict  # Retorna imediatamente se houver um match exato
-
-                # Se não houver janela definida, marcar como candidato caso nenhum outro tenha sido encontrado
                 elif best_match is None:
                     best_match = exec_dict
 
@@ -88,6 +92,21 @@ class ExecutionDataset:
         """
         return all(dict(execution)["completed"] for execution in self.executions)
 
+    def get_completion_percentage(self):
+        """
+        Retorna a porcentagem de execuções concluídas com base no tempo total de execução.
+
+        :return: Valor float representando a porcentagem de completude (0 a 100).
+        """
+        if self._total_execution_time == 0:
+            return 0.0  # Evita divisão por zero
+
+        completed_time = sum(
+            dict(exec)["items"] * dict(exec)["time_per_item"]
+            for exec in self.executions if dict(exec)["completed"]
+        )
+        return (completed_time / self._total_execution_time) * 100  # Retorna a porcentagem
+
     def get_pending_executions(self):
         """
         Retorna todas as execuções pendentes.
@@ -99,18 +118,3 @@ class ExecutionDataset:
         Representação legível do ExecutionDataset.
         """
         return f"ExecutionDataset({[dict(exec) for exec in self.executions]})"
-    
-# # Caminho do arquivo CSV para teste
-# execution_dataset_path = "data/execution_dataset.csv"
-
-# # Criar uma instância e testar a busca por execuções
-# execution_dataset = ExecutionDataset(execution_dataset_path)
-
-# # Testar busca por um robô dentro e fora de uma janela de tempo
-# test_time_1 = datetime(2025, 2, 23, 17, 0)  # Dentro da janela de R1
-# test_time_2 = datetime(2025, 2, 23, 23, 0)  # Fora da janela de R1, deve retornar R4
-
-# exec_1 = execution_dataset.get_execution_by_robot_and_time("R1", test_time_1)
-# exec_2 = execution_dataset.get_execution_by_robot_and_time("R4", test_time_2)
-
-# exec_1, exec_2

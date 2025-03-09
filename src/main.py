@@ -44,7 +44,9 @@ else:
         if robot:
             initial_event = Event(start_time, "start_execution", robot, machine)
             event_scheduler.add_event(initial_event)
-# ==============================================================================================================================
+# =================================================================================================================================
+
+
 
 # Executar a simulação
 while event_scheduler.has_pending_events() and clock <= finish_time:
@@ -78,15 +80,20 @@ while event_scheduler.has_pending_events() and clock <= finish_time:
             event_scheduler.add_event(Event(end_time, "end_execution", event.robot, event.machine_name))
 
             # Registrar no SimulationLog
-            simulation_log.log_execution(event.event_type, event.robot.name, event.machine_name, event.event_time, end_time, execution_id)
+            simulation_log.log(event.event_type, event.robot.name, event.machine_name, event.event_time, end_time, execution_id)
 
             # Marcar a execução como concluída se for do ExecutionDataset
             if execution_id:
                 execution_dataset.mark_execution_complete(execution_id)
+                
+                # Faz log da porcentagem de completudo do execution_dataset.
+                completion_percentage = round(execution_dataset.get_completion_percentage(), 2)
+                
+                simulation_log.log("completion_percentage", None, None, event.event_time, event.event_time, execution_id, completion_percentage)
 
         else:
             # Registrar "Atropelamento" no log e continuar
-            simulation_log.log_execution(event.event_type, event.robot.name, event.machine_name, event.event_time, event.event_time)
+            simulation_log.log(event.event_type, event.robot.name, event.machine_name, event.event_time, event.event_time)
             print(f"Atropelamento: {event.robot.name} tentou executar em {event.machine_name}, mas estava ocupada.")
             continue
 
