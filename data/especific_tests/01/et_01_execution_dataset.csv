@@ -1,0 +1,4 @@
+execution_id,robot,items,time_per_item,start_window,end_window,completed
+1,R1,5,10,,,False
+2,R1,5,10,,,False
+3,R1,5,10,,,False

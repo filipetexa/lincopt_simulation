@@ -1,0 +1,11 @@
+execution_id,robot,items,time_per_item,start_window,end_window,completed
+1,R2,3,10,,,False
+2,R3,3,10,,,False
+3,R4,3,10,,,False
+4,R5,2,10,,,False
+5,R1,2,10,,,False
+6,R2,2,10,,,False
+7,R3,2,10,,,False
+8,R4,2,10,,,False
+9,R5,2,10,,,False
+10,R1,2,10,,,False
