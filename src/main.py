@@ -1,3 +1,4 @@
+import argparse
 from datetime import datetime, timedelta
 from event_scheduler import EventScheduler, Event
 from bp_scheduler import BPScheduler
@@ -7,14 +8,27 @@ from simulation_log import SimulationLog
 from machines import Machines
 from robot import Robot
 
-# Configuração para escolher entre BP Scheduler e Dynamic Queue
-USE_BP_SCHEDULER = False  # Se False, usará DynamicQueue
 
-# Definir caminhos dos arquivos de entrada
-BP_SCHEDULER_FILE = "data/bp_scheduler.csv"
-DYNAMIC_QUEUE_FILE = "data/dynamic_queue.csv"
-EXECUTION_DATASET_FILE = "data/execution_dataset.csv"
-SIMULATION_LOG_FILE = "logs/simulation_log.csv"
+# python main.py -ubp -bsf "custom_bp_scheduler.csv" -dq "custom_dynamic_queue.csv" -eds "custom_execution_dataset.csv" -sa "FIFO"
+# Configurar Argumentos do Terminal
+parser = argparse.ArgumentParser(description="Simulação de Execução de Robôs")
+
+parser.add_argument("-ubp", "--use_bp", action="store_true", help="Se definido, usa o BP Scheduler ao invés da Fila Dinâmica.")
+parser.add_argument("-bsf", "--bp_scheduler_file", type=str, default="data/bp_scheduler.csv", help="Arquivo CSV do BP Scheduler.")
+parser.add_argument("-dq", "--dynamic_queue_file", type=str, default="data/dynamic_queue.csv", help="Arquivo CSV da Fila Dinâmica.")
+parser.add_argument("-eds", "--execution_dataset_file", type=str, default="data/execution_dataset.csv", help="Arquivo CSV do Execution Dataset.")
+parser.add_argument("-sa", "--sort_algorithm", type=str, default="WEIGHTED_PRIORITY", help="Algoritmo de ordenação da Fila Dinâmica.")
+
+args = parser.parse_args()
+
+# Configuração baseada nos argumentos do terminal
+USE_BP_SCHEDULER = args.use_bp
+BP_SCHEDULER_FILE = args.bp_scheduler_file
+DYNAMIC_QUEUE_FILE = args.dynamic_queue_file
+EXECUTION_DATASET_FILE = args.execution_dataset_file
+SORT_ALGORITHM = args.sort_algorithm
+
+SIMULATION_LOG_FILE = f'logs/simulation_log_{SORT_ALGORITHM}.csv'
 
 # Inicializar as estruturas do sistema
 start_time = datetime(2025, 2, 20, 8, 0)  # Data inicial da simulação
@@ -23,9 +37,9 @@ finish_time = datetime(2025, 3, 20, 0, 0)
 event_scheduler = EventScheduler(start_time)
 execution_dataset = ExecutionDataset(EXECUTION_DATASET_FILE)
 simulation_log = SimulationLog(SIMULATION_LOG_FILE)
-# machine_names = ["M1", "M2", "M3"]  # Máquinas disponíveis
 machine_names = ["M1"]  # Máquinas disponíveis
 machines = Machines(machine_names)
+
 
 # =================================== LÓGICA PARA ESCOLHER ENTRE BP SCHEDULER E FILA DINÂMICA ===================================
 if USE_BP_SCHEDULER:
@@ -36,7 +50,7 @@ if USE_BP_SCHEDULER:
         scheduled_bot_event = Event(execution.start_time, "start_execution", robot, execution.machine_name)
         event_scheduler.add_event(scheduled_bot_event)
 else:
-    scheduler = DynamicQueue(DYNAMIC_QUEUE_FILE, sorting_algorithm="FIFO")
+    scheduler = DynamicQueue(DYNAMIC_QUEUE_FILE, sorting_algorithm=SORT_ALGORITHM)
 
     for machine in machines.get_idle_machines():
         # Adicionar o primeiro evento da DynamicQueue ao EventScheduler

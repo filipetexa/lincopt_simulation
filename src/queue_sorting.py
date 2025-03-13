@@ -49,6 +49,11 @@ class QueueSortingAlgorithm:
             if robot.name not in data:
                 data[robot.name] = {"weight": 0}
 
+        # Set do ultimo robo executado com 0
+        last_bot_executed = queue[-1].name
+        data[last_bot_executed] = {"weight": 0}
+
+
         # Atualiza os pesos dos robôs conforme a prioridade
         for robot in queue:
             if robot.priority == 1:
