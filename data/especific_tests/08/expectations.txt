@@ -1,0 +1,12 @@
+Espera-se que nesse test case a fila dinâmica que implementa o mecanismo de pesos por prioridade performe melhor pois a carga de trabalho do teste é superior para o robô de prioridade 1.
+Temos a seguinte distribuição de trabalho:
+R1(p1) -----> 14h ----> Possui restrição de execução do trabalho dentro do dia 2025-02-20
+R2(p2) -----> 12h
+
+Essa fila ira performar melhoror tanbem que o shchedule que tem horarios de execução fixos, pois o trabalho que os robos deveriam executar foi chegando ao longo do dia, situação muito comum em ambientes reais. Ou seja, apesar do numero de janelas priorizar o robo de prioridade maior, como o trabalho foi chegando ao logo do dia, foi-se gerando janelas vazias.
+
+
+Conclusão:
+Scheduler -> Não finaliza o trabalho
+DQ FIFO -> Não fianliza o trabalho
+DQ FIFO + Weight Algorithm - Finaliza o trabalho
