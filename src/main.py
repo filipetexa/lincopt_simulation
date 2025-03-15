@@ -9,15 +9,15 @@ from machines import Machines
 from robot import Robot
 
 
-# python main.py -ubp -bsf "custom_bp_scheduler.csv" -dq "custom_dynamic_queue.csv" -eds "custom_execution_dataset.csv" -sa "FIFO"
+# python main.py -ubp -bsf "custom_bp_scheduler.csv" -dq "custom_dynamic_queue.csv" -eds "custom_execution_dataset.csv" -sa "FIFO" or "WEIGHTED_PRIORITY"
 # Configurar Argumentos do Terminal
 parser = argparse.ArgumentParser(description="Simulação de Execução de Robôs")
 
 parser.add_argument("-ubp", "--use_bp", action="store_true", help="Se definido, usa o BP Scheduler ao invés da Fila Dinâmica.")
-parser.add_argument("-bsf", "--bp_scheduler_file", type=str, default="data/bp_scheduler.csv", help="Arquivo CSV do BP Scheduler.")
-parser.add_argument("-dq", "--dynamic_queue_file", type=str, default="data/dynamic_queue.csv", help="Arquivo CSV da Fila Dinâmica.")
+parser.add_argument("-bsf", "--bp_scheduler_file", type=str, help="Arquivo CSV do BP Scheduler.")
+parser.add_argument("-dq", "--dynamic_queue_file", type=str, help="Arquivo CSV da Fila Dinâmica.")
 parser.add_argument("-eds", "--execution_dataset_file", type=str, default="data/execution_dataset.csv", help="Arquivo CSV do Execution Dataset.")
-parser.add_argument("-sa", "--sort_algorithm", type=str, default="WEIGHTED_PRIORITY", help="Algoritmo de ordenação da Fila Dinâmica.")
+parser.add_argument("-sa", "--sort_algorithm", type=str, default="FIFO", help="Algoritmo de ordenação da Fila Dinâmica.")
 
 args = parser.parse_args()
 
@@ -28,7 +28,10 @@ DYNAMIC_QUEUE_FILE = args.dynamic_queue_file
 EXECUTION_DATASET_FILE = args.execution_dataset_file
 SORT_ALGORITHM = args.sort_algorithm
 
-SIMULATION_LOG_FILE = f'logs/simulation_log_{SORT_ALGORITHM}.csv'
+if BP_SCHEDULER_FILE:
+    SIMULATION_LOG_FILE = f'logs/simulation_log_{BP_SCHEDULER_FILE.replace('/','_')}.csv'
+else:
+    SIMULATION_LOG_FILE = f'logs/simulation_log_{DYNAMIC_QUEUE_FILE.replace('/','_')}_{SORT_ALGORITHM}.csv'
 
 # Inicializar as estruturas do sistema
 start_time = datetime(2025, 2, 20, 8, 0)  # Data inicial da simulação
@@ -60,10 +63,8 @@ else:
             event_scheduler.add_event(initial_event)
 # =================================================================================================================================
 
-
-
 # Executar a simulação
-while event_scheduler.has_pending_events() and clock <= finish_time:
+while (event_scheduler.has_pending_events() and USE_BP_SCHEDULER) or clock <= finish_time:
     event = event_scheduler.get_next_event()
     
     # Sai do loop caso não tenha mais eventos a serem processados
@@ -94,7 +95,7 @@ while event_scheduler.has_pending_events() and clock <= finish_time:
             event_scheduler.add_event(Event(end_time, "end_execution", event.robot, event.machine_name))
 
             # Registrar no SimulationLog
-            simulation_log.log(event.event_type, event.robot.name, event.machine_name, event.event_time, end_time, execution_id)
+            simulation_log.log("robot_execution", event.robot.name, event.machine_name, event.event_time, end_time, execution_id)
 
             # Marcar a execução como concluída se for do ExecutionDataset
             if execution_id:
@@ -107,8 +108,7 @@ while event_scheduler.has_pending_events() and clock <= finish_time:
 
         else:
             # Registrar "Atropelamento" no log e continuar
-            simulation_log.log(event.event_type, event.robot.name, event.machine_name, event.event_time, event.event_time)
-            print(f"Atropelamento: {event.robot.name} tentou executar em {event.machine_name}, mas estava ocupada.")
+            simulation_log.log("run_over", event.robot.name, event.machine_name, event.event_time, event.event_time)
             continue
 
     # ============================= PROCESSAMENTO DE EVENTO DE FIM (end_execution) =============================
