@@ -2,95 +2,101 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Definir a pasta base onde estão os arquivos de log
+# Definição do diretório de logs
 LOGS_DIR = "./logs"
 
-# Listar automaticamente todos os arquivos CSV dentro da pasta de logs
-log_files = [f for f in os.listdir(LOGS_DIR) if f.endswith(".csv")]
+# Coleta todos os arquivos CSV no diretório de logs
+log_files = [os.path.join(LOGS_DIR, file) for file in os.listdir(LOGS_DIR) if file.endswith(".csv")]
 
-# Estrutura para armazenar os resultados
-analysis_results = []
+# Lista para armazenar os dados de cada arquivo
+log_data = []
 
-# Função para processar um único arquivo de log
-def process_log(file_path, method_name):
-    df = pd.read_csv(file_path)
+# Carregar os logs
+for file in log_files:
+    df = pd.read_csv(file)
+    
+    # Extraindo o nome do método a partir do nome do arquivo
+    method_name = os.path.basename(file).replace("simulation_log_data_", "").replace(".csv", "")
+    
+    # Adicionando a coluna do método no DataFrame
+    df["method"] = method_name
+    
+    # Converter as colunas de data para datetime
+    df["start_time"] = pd.to_datetime(df["start_time"], errors="coerce")
+    df["end_time"] = pd.to_datetime(df["end_time"], errors="coerce")
+    
+    # Garantindo que valores nulos sejam tratados
+    df.dropna(subset=["start_time", "end_time"], inplace=True)
 
-    # Verificar se as colunas esperadas estão no arquivo
-    required_columns = {"event_type", "execution_id", "robot", "machine", "start_time", "end_time"}
-    missing_columns = required_columns - set(df.columns)
-    if missing_columns:
-        print(f"⚠️ Aviso: O arquivo {file_path} está faltando as colunas: {missing_columns}")
-        return None
+    # Ajuste: Extraindo completion_percentage corretamente
+    df["completion_percentage"] = df.apply(lambda row: float(row["data"]) if row["event_type"] == "completion_percentage" else None, axis=1)
+    
+    log_data.append(df)
 
-    # Total de execuções concluídas (event_type = "robot_execution")
-    total_executions = df[df["event_type"] == "robot_execution"].shape[0]
+# Combinar todos os logs em um único DataFrame
+logs_df = pd.concat(log_data, ignore_index=True)
 
-    # Execuções canceladas ou ignoradas (event_type = "run_over")
-    total_run_overs = df[df["event_type"] == "run_over"].shape[0]
+### FILTRANDO SOMENTE AS EXECUÇÕES VÁLIDAS (removendo execuções sem ID)
+logs_df = logs_df[logs_df["execution_id"].notna()]
 
-    # Verificar se a coluna 'completion_percentage' existe antes de acessá-la
-    if "completion_percentage" in df.columns:
-        completion_logs = df[df["event_type"] == "completion_percentage"]
-        final_completion = completion_logs["execution_id"].count()
-        completion_percentage = completion_logs["completion_percentage"].max() if not completion_logs.empty else 0
-    else:
-        final_completion = 0
-        completion_percentage = 0
+# Definir os limites de tempo com base nos dados disponíveis
+start_time_min = logs_df["start_time"].min()
+end_time_max = logs_df["end_time"].max()
 
-    return {
-        "method": method_name,
-        "total_executions": total_executions,
-        "total_run_overs": total_run_overs,
-        "final_completion_logs": final_completion,
-        "final_completion_percentage": completion_percentage
-    }
-
-# Processar todos os arquivos encontrados na pasta
-for log_file in log_files:
-    method_name = log_file.replace("simulation_log_data_", "").replace(".csv", "").replace(".csv_", "")
-    file_path = os.path.join(LOGS_DIR, log_file)
-
-    if os.path.exists(file_path):
-        result = process_log(file_path, method_name)
-        if result:
-            analysis_results.append(result)
-
-# Criar DataFrame com os resultados
-results_df = pd.DataFrame(analysis_results)
-
-# Salvar os resultados em CSV
-output_file = os.path.join(LOGS_DIR, "log_analysis_results.csv")
-results_df.to_csv(output_file, index=False)
+# Criar um DataFrame com as métricas agregadas por método
+summary_df = logs_df.groupby("method").agg(
+    total_executions=pd.NamedAgg(column="execution_id", aggfunc="count"),
+    total_run_overs=pd.NamedAgg(column="event_type", aggfunc=lambda x: (x == "run_over").sum()),
+    final_completion_logs=pd.NamedAgg(column="event_type", aggfunc=lambda x: (x == "completion_percentage").sum()),
+    final_completion_percentage=pd.NamedAgg(column="completion_percentage", aggfunc="mean")
+).reset_index()
 
 # Exibir os resultados no terminal
-print(results_df)
+print(summary_df)
 
-# Criar gráfico de execuções concluídas por método
-plt.figure(figsize=(8, 5))
-plt.bar(results_df["method"], results_df["total_executions"], color="blue")
-plt.xlabel("Método de Execução")
-plt.ylabel("Total de Execuções Concluídas")
-plt.title("Comparação de Execuções Concluídas por Método")
-plt.xticks(rotation=25)
+# Salvar os resultados em CSV
+summary_file = os.path.join(LOGS_DIR, "log_analysis_results.csv")
+summary_df.to_csv(summary_file, index=False)
+
+# ========== GERAR GRÁFICOS ==========
+# Gráfico de barras comparando a completude final
+plt.figure(figsize=(10, 5))
+plt.bar(summary_df["method"], summary_df["final_completion_percentage"])
+plt.xlabel("Método")
+plt.ylabel("Porcentagem Final de Completeza")
+plt.title("Comparação de Completeza por Método")
+plt.xticks(rotation=30)
+plt.savefig(os.path.join(LOGS_DIR, "completion_comparison.png"))
 plt.show()
 
-# Criar gráfico de atropelamentos por método
-plt.figure(figsize=(8, 5))
-plt.bar(results_df["method"], results_df["total_run_overs"], color="red")
-plt.xlabel("Método de Execução")
-plt.ylabel("Total de Atropelamentos")
-plt.title("Comparação de Atropelamentos por Método")
-plt.xticks(rotation=25)
+# Gráfico de evolução da completude ao longo do tempo
+completion_logs = logs_df[logs_df["event_type"] == "completion_percentage"].dropna(subset=["completion_percentage"])
+plt.figure(figsize=(12, 6))
+
+for method, data in completion_logs.groupby("method"):
+    plt.plot(data["start_time"], data["completion_percentage"], label=method)
+
+plt.xlabel("Tempo")
+plt.ylabel("Porcentagem de Completeza")
+plt.title("Evolução da Completeza ao Longo do Tempo")
+plt.legend()
+plt.xlim(start_time_min, end_time_max)  # Limitando ao tempo dos logs
+plt.savefig(os.path.join(LOGS_DIR, "completion_evolution.png"))
 plt.show()
 
-# Criar gráfico de porcentagem de completude final
-plt.figure(figsize=(8, 5))
-plt.bar(results_df["method"], results_df["final_completion_percentage"], color="green")
-plt.xlabel("Método de Execução")
-plt.ylabel("Porcentagem Final de Completude")
-plt.title("Comparação de Completude por Método")
-plt.xticks(rotation=25)
+# Gráfico de evolução dos atropelamentos ao longo do tempo
+run_over_logs = logs_df[logs_df["event_type"] == "run_over"]
+plt.figure(figsize=(12, 6))
+
+for method, data in run_over_logs.groupby("method"):
+    plt.plot(data["start_time"], range(len(data)), label=method)
+
+plt.xlabel("Tempo")
+plt.ylabel("Número Acumulado de Atropelamentos")
+plt.title("Evolução dos Atropelamentos ao Longo do Tempo")
+plt.legend()
+plt.xlim(start_time_min, end_time_max)  # Limitando ao tempo dos logs
+plt.savefig(os.path.join(LOGS_DIR, "run_over_evolution.png"))
 plt.show()
 
-# Informar o usuário que a análise foi concluída
-print(f"✅ Análise concluída! Os resultados foram salvos em: {output_file}")
+print(f"✅ Análise concluída! Os resultados foram salvos em: {summary_file}")
