@@ -1,0 +1,32 @@
+stateDiagram-v2
+    [*] --> Inicializar
+    Inicializar --> CarregarDados: Fim da inicialização
+    CarregarDados --> VerificarTipoScheduler: Fim do carregamento de dados
+
+    VerificarTipoScheduler --> AgendarEventosIniciais_BP : se USE_BP_SCHEDULER = True
+    VerificarTipoScheduler --> AgendarEventosIniciais_DQ : se USE_BP_SCHEDULER = False
+
+    AgendarEventosIniciais_BP --> AguardarEvento
+    AgendarEventosIniciais_DQ --> AguardarEvento
+
+    AguardarEvento --> VerificarMaquinaDisponivel : evento.start_execution
+    AguardarEvento --> LiberarMaquina : evento.end_execution
+    AguardarEvento --> [*] : fim dos eventos
+
+
+    VerificarMaquinaDisponivel --> AlocarMaquina : se disponível
+    VerificarMaquinaDisponivel --> LogarAtropelamento : se ocupada
+
+    AlocarMaquina --> MarcarExecucaoCompleta: Se existe execução no Dataset
+    AlocarMaquina --> AgendarEventoFim: Se não existe execução no Dataset
+    MarcarExecucaoCompleta --> AgendarEventoFim: Define tempo de execução
+
+    AgendarEventoFim --> ReorganizarFilaDQ : se USE_BP_SCHEDULER = False
+    ReorganizarFilaDQ --> AtualizarLogExecucao
+    AgendarEventoFim --> AtualizarLogExecucao: se USE_BP_SCHEDULER = True
+
+    LiberarMaquina --> AtualizarLogExecucao
+
+    LogarAtropelamento --> AtualizarLogExecucao
+    AtualizarLogExecucao --> AguardarEvento
+
